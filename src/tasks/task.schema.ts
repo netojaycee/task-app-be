@@ -23,3 +23,10 @@ export class Task extends Document {
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);
+
+// Create indexes for faster filtering and search
+TaskSchema.index({ userId: 1, isDeleted: 1 }); // Base lookup
+TaskSchema.index({ userId: 1, status: 1, isDeleted: 1 }); // Filter by status
+TaskSchema.index({ userId: 1, priority: 1, isDeleted: 1 }); // Filter by priority
+TaskSchema.index({ userId: 1, status: 1, priority: 1, isDeleted: 1 }); // Filter by both
+TaskSchema.index({ title: 'text', description: 'text' }); // Text search

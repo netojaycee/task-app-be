@@ -44,3 +44,42 @@ export class UpdateTaskDto {
   @IsIn(['low', 'medium', 'high'])
   priority?: string;
 }
+
+export class TaskFilterDto {
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiProperty({
+    enum: ['pending', 'in-progress', 'completed'],
+    required: false,
+  })
+  @IsOptional()
+  @IsIn(['pending', 'in-progress', 'completed'])
+  status?: string;
+
+  @ApiProperty({
+    enum: ['low', 'medium', 'high'],
+    required: false,
+  })
+  @IsOptional()
+  @IsIn(['low', 'medium', 'high'])
+  priority?: string;
+
+  @ApiProperty({
+    required: false,
+    default: 1,
+    description: 'Page number (starts from 1)',
+  })
+  @IsOptional()
+  page?: number;
+
+  @ApiProperty({
+    required: false,
+    default: 10,
+    description: 'Number of items per page',
+  })
+  @IsOptional()
+  limit?: number;
+}

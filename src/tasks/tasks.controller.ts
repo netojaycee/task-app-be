@@ -8,9 +8,10 @@ import {
   Param,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
-import { CreateTaskDto, UpdateTaskDto } from './task.dto';
+import { CreateTaskDto, TaskFilterDto, UpdateTaskDto } from './task.dto';
 import { AuthGuard } from '@nestjs/passport';
 import {
   ApiTags,
@@ -39,10 +40,54 @@ export class TasksController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all tasks for the logged-in user' })
-  @ApiResponse({ status: 200, description: 'List of tasks' })
-  async findAll(@Req() req: RequestWithUser) {
-    return this.tasksService.findByUserId(req.user.userId);
+  @ApiOperation({
+    summary:
+      'Get all tasks for the logged-in user with optional filtering and pagination',
+    description:
+      'Filter tasks by status, priority, and search for text in title and description. Supports pagination with page and limit parameters.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of filtered tasks with pagination metadata',
+    schema: {
+      properties: {
+        data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              _id: { type: 'string' },
+              title: { type: 'string' },
+              description: { type: 'string' },
+              status: {
+                type: 'string',
+                enum: ['pending', 'in-progress', 'completed'],
+              },
+              priority: { type: 'string', enum: ['low', 'medium', 'high'] },
+              userId: { type: 'string' },
+              isDeleted: { type: 'boolean' },
+              createdAt: { type: 'string', format: 'date-time' },
+              updatedAt: { type: 'string', format: 'date-time' },
+            },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            total: { type: 'number' },
+            page: { type: 'number' },
+            limit: { type: 'number' },
+            pages: { type: 'number' },
+          },
+        },
+      },
+    },
+  })
+  async findAll(
+    @Query() filterDto: TaskFilterDto,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.tasksService.findByUserId(req.user.userId, filterDto);
   }
 
   @Put(':id')

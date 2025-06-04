@@ -1,9 +1,21 @@
-import { Controller, Post, Body, Res, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  HttpStatus,
+  Get,
+  UseGuards,
+  Req,
+  HttpCode,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 import { CreateUserDto } from 'src/users/user.dto';
 import { LoginDto } from './login.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { RequestWithUser } from 'src/types/express';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -31,5 +43,28 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
     });
     return res.status(HttpStatus.OK).json({ message: 'Login successful' });
+  }
+
+  @Get('verify')
+  @ApiOperation({ summary: 'Verify JWT token' })
+  @ApiResponse({ status: 200, description: 'Token verified, user returned' })
+  @UseGuards(AuthGuard('jwt'))
+  verify(@Req() req: RequestWithUser) {
+    return req.user;
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Logout user and clear authentication cookie' })
+  @ApiResponse({ status: 200, description: 'Successfully logged out' })
+  logout(@Res({ passthrough: true }) response: Response) {
+    response.clearCookie('fgkt', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    return { message: 'Logout successful' };
   }
 }

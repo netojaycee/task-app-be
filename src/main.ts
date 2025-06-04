@@ -8,6 +8,10 @@ import { Logger } from '@nestjs/common';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
+  app.enableCors({
+    origin: [process.env.FRONTEND_URL, process.env.LIVE_FRONTEND_URL],
+    credentials: true,
+  });
   app.use(cookieParser());
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe());
