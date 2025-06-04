@@ -39,8 +39,13 @@ export class AuthController {
     const { token } = await this.authService.login(loginDto);
     res.cookie('fgkt', token, {
       httpOnly: true,
-      sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax', // fine for subdomain ↔ subdomain
+      ...(process.env.NODE_ENV === 'production'
+        ? { domain: '.bitekitchen.com.ng' }
+        : {}),
+      path: '/', // send on every request
+      maxAge: 24 * 60 * 60 * 1000,
     });
     return res.status(HttpStatus.OK).json({ message: 'Login successful' });
   }
@@ -62,6 +67,9 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      ...(process.env.NODE_ENV === 'production'
+        ? { domain: '.bitekitchen.com.ng' }
+        : {}),
       path: '/',
     });
 

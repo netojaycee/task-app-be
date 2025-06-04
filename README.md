@@ -23,8 +23,8 @@ A NestJS-based backend for a task management application with JWT authentication
 1. **Clone the repository**:
 
    ```bash
-   git clone <repo-url>
-   cd task-management/BE
+   git clone https://github.com/netojaycee/task-app-be.git
+   cd task-app-be
    ```
 
 2. **Install dependencies**:
