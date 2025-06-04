@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsIn } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsIn,
+  IsNumber,
+  IsNotEmpty,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTaskDto {
@@ -82,4 +88,11 @@ export class TaskFilterDto {
   })
   @IsOptional()
   limit?: number;
+}
+
+export class UpdateTaskPositionDto {
+  @ApiProperty({ description: 'New position for the task' })
+  @IsNumber()
+  @IsNotEmpty()
+  position: number;
 }

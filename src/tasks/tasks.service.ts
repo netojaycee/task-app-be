@@ -17,11 +17,27 @@ export class TasksService {
   ) {}
 
   async create(createTaskDto: CreateTaskDto, userId: string) {
-    const task = await this.taskModel.create({ ...createTaskDto, userId });
+    // Find the highest position for the current user's tasks
+    const highestPositionTask = await this.taskModel
+      .findOne({ userId, isDeleted: false })
+      .sort({ position: -1 })
+      .select('position');
+
+    const nextPosition = highestPositionTask
+      ? highestPositionTask.position + 1
+      : 0;
+
+    // Create the new task with the next position
+    const task = await this.taskModel.create({
+      ...createTaskDto,
+      userId,
+      position: nextPosition,
+    });
+
     await this.logsService.createLog(
       userId,
       'create_task',
-      `Task ${task.id} created`,
+      `Task ${task.id} created at position ${nextPosition}`,
     );
     return task;
   }
@@ -67,7 +83,7 @@ export class TasksService {
         // Then get paginated data
         const tasks = await this.taskModel
           .find(query)
-          .sort({ score: { $meta: 'textScore' } })
+          .sort({ score: { $meta: 'textScore' }, position: 1 })
           .skip(skip)
           .limit(pageLimit);
 
@@ -94,7 +110,7 @@ export class TasksService {
     // Get paginated tasks
     const tasks = await this.taskModel
       .find(query)
-      .sort({ createdAt: -1 }) // Sort by newest first
+      .sort({ position: 1 }) // Sort by position ascending
       .skip(skip)
       .limit(pageLimit);
 
@@ -149,13 +165,32 @@ export class TasksService {
     const task = await this.taskModel.findById(id);
     if (!task || task.isDeleted) throw new NotFoundException('Task not found');
     if (task.userId !== userId) throw new ForbiddenException('Unauthorized');
+
+    const deletedPosition = task.position;
+
+    // Mark the task as deleted
     await this.taskModel.updateOne({ _id: id }, { isDeleted: true });
+
+    // Reorder remaining tasks to fill the gap
+    await this.taskModel.updateMany(
+      {
+        userId,
+        isDeleted: false,
+        position: { $gt: deletedPosition },
+      },
+      { $inc: { position: -1 } },
+    );
+
     await this.logsService.createLog(
       userId,
       'delete_task',
-      `Task ${id} deleted`,
+      `Task ${id} deleted from position ${deletedPosition}`,
     );
-    return { message: 'Task deleted' };
+
+    return {
+      message: 'Task deleted',
+      position: deletedPosition,
+    };
   }
 
   async deleteAllByUserId(userId: string) {
@@ -163,5 +198,25 @@ export class TasksService {
       { userId, isDeleted: false },
       { isDeleted: true },
     );
+  }
+
+  async updatePosition(id: string, position: number, userId: string) {
+    const task = await this.taskModel.findById(id);
+    if (!task || task.isDeleted) throw new NotFoundException('Task not found');
+    if (task.userId !== userId) throw new ForbiddenException('Unauthorized');
+    const updatedTask = await this.taskModel.findByIdAndUpdate(
+      id,
+      { position: Number(position) },
+      { new: true, runValidators: true },
+    );
+    await this.logsService.createLog(
+      userId,
+      'update_task_position',
+      `Task ${id} position updated to ${Number(position)}`,
+    );
+    return {
+      message: 'Task position updated',
+      task: updatedTask,
+    };
   }
 }

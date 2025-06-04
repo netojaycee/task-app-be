@@ -11,7 +11,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
-import { CreateTaskDto, TaskFilterDto, UpdateTaskDto } from './task.dto';
+import {
+  CreateTaskDto,
+  TaskFilterDto,
+  UpdateTaskDto,
+  UpdateTaskPositionDto,
+} from './task.dto';
 import { AuthGuard } from '@nestjs/passport';
 import {
   ApiTags,
@@ -19,7 +24,6 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { Request } from 'express';
 import { RequestWithUser } from 'src/types/express';
 
 @ApiTags('tasks')
@@ -106,5 +110,20 @@ export class TasksController {
   @ApiResponse({ status: 200, description: 'Task deleted' })
   async delete(@Param('id') id: string, @Req() req: RequestWithUser) {
     return this.tasksService.delete(id, req.user.userId);
+  }
+
+  @Put(':id/position')
+  @ApiOperation({ summary: 'Update task position' })
+  @ApiResponse({ status: 200, description: 'Task position updated' })
+  async updatePosition(
+    @Param('id') id: string,
+    @Body() updatePositionDto: UpdateTaskPositionDto,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.tasksService.updatePosition(
+      id,
+      updatePositionDto.position,
+      req.user.userId,
+    );
   }
 }

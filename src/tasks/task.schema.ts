@@ -20,6 +20,9 @@ export class Task extends Document {
 
   @Prop({ default: false })
   isDeleted: boolean;
+
+  @Prop({ required: true, default: 0 })
+  position: number;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);
@@ -29,4 +32,5 @@ TaskSchema.index({ userId: 1, isDeleted: 1 }); // Base lookup
 TaskSchema.index({ userId: 1, status: 1, isDeleted: 1 }); // Filter by status
 TaskSchema.index({ userId: 1, priority: 1, isDeleted: 1 }); // Filter by priority
 TaskSchema.index({ userId: 1, status: 1, priority: 1, isDeleted: 1 }); // Filter by both
+TaskSchema.index({ userId: 1, position: 1 }); // Position ordering
 TaskSchema.index({ title: 'text', description: 'text' }); // Text search
